@@ -1,0 +1,16 @@
+{
+  "train_rows": 4527,
+  "val_rows": 516,
+  "test_rows": 546,
+  "train_positives": 235,
+  "oof_auc_catboost": 0.7178,
+  "oof_auc_lightgbm": 0.6924,
+  "oof_auc_xgboost": 0.6981,
+  "val_auc": 0.6746,
+  "val_brier": 0.0532,
+  "test_auc": 0.6528,
+  "test_brier": 0.0535,
+  "ensemble_pkl_mb": 2.92,
+  "models_dir": "models\\r0",
+  "schema_version": "speedway_r0_v1_20260327"
+}
