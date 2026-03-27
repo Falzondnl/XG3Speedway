@@ -1,0 +1,21 @@
+# Development artifacts
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.env
+*.egg-info/
+dist/
+build/
+
+# Training data (not deployed — models are deployed as pkl files)
+D:/
+data/
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
