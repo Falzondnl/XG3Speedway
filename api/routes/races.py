@@ -189,6 +189,17 @@ async def price_h2h_endpoint(body: H2HRequest, request: Request) -> dict:
     return {"status": "ok", "h2h": result}
 
 
+@router.get("/fixtures")
+@router.get("/events")
+async def list_fixtures() -> list:
+    """
+    Fixture discovery endpoint for GenericSportHub.
+    Speedway GP is not available via Optic Odds — returns honest empty list.
+    Fixtures are added manually via the scheduler or trading console.
+    """
+    return []
+
+
 @router.get("/riders/top")
 async def top_riders(request: Request, limit: int = 20) -> dict:
     """Return top riders by current ELO rating."""
