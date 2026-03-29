@@ -1,0 +1,54 @@
+name: Deploy to Railway
+
+on:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-railway
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to Railway Production
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Deploy via Railway API (serviceInstanceRedeploy)
+        env:
+          RAILWAY_API_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+        run: |
+          RAILWAY_SERVICE_ID="3fdde9cf-9bc2-4ada-bd72-747a129bfcc6"
+          RAILWAY_ENVIRONMENT_ID="6eeea96f-0b0c-4add-80c3-8646b5c102c8"
+          echo "Triggering Railway deployment for XG3Speedway..."
+          RESPONSE=$(curl -s -X POST "https://backboard.railway.app/graphql/v2" \
+            -H "Authorization: Bearer $RAILWAY_API_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"query\":\"mutation { serviceInstanceRedeploy(environmentId: \\\"$RAILWAY_ENVIRONMENT_ID\\\", serviceId: \\\"$RAILWAY_SERVICE_ID\\\") }\"}")
+          echo "API response: $RESPONSE"
+          if echo "$RESPONSE" | grep -q '"serviceInstanceRedeploy":true'; then
+            echo "✅ Railway deployment triggered"
+          else
+            echo "⚠️  Railway API response unexpected — check Railway dashboard"
+            echo "   Response: $RESPONSE"
+          fi
+
+      - name: Wait for service to stabilize
+        run: sleep 60
+
+      - name: Health check
+        run: |
+          MAX_ATTEMPTS=6
+          DELAY=15
+          for i in $(seq 1 $MAX_ATTEMPTS); do
+            HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 \
+              "https://xg3speedway-production.up.railway.app/health" || echo "000")
+            echo "  Attempt $i/$MAX_ATTEMPTS — /health: HTTP ${HTTP_CODE}"
+            if [ "$HTTP_CODE" = "200" ]; then
+              echo "✅ Health check passed"
+              break
+            fi
+            [ "$i" -lt "$MAX_ATTEMPTS" ] && sleep $DELAY || (echo "❌ Health check failed" && exit 1)
+          done
