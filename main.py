@@ -91,11 +91,23 @@ def create_app() -> FastAPI:
     from api.routes.races import router as races_router
     from api.routes.admin import router as admin_router
     from api.routes.settlement import router as settlement_router
+    from api.routes.derivatives import router as derivatives_router
+    from api.routes.live import router as live_router
 
     app.include_router(health_router)
     app.include_router(races_router)
     app.include_router(admin_router)
     app.include_router(settlement_router)
+    app.include_router(
+        derivatives_router,
+        prefix="/api/v1/speedway/derivatives",
+        tags=["derivatives"],
+    )
+    app.include_router(
+        live_router,
+        prefix="/api/v1/speedway/live",
+        tags=["live"],
+    )
 
     return app
 
