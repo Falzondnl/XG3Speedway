@@ -90,10 +90,12 @@ def create_app() -> FastAPI:
     from api.routes.health import router as health_router
     from api.routes.races import router as races_router
     from api.routes.admin import router as admin_router
+    from api.routes.settlement import router as settlement_router
 
     app.include_router(health_router)
     app.include_router(races_router)
     app.include_router(admin_router)
+    app.include_router(settlement_router)
 
     return app
 

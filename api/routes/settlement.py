@@ -299,3 +299,15 @@ async def settlement_health() -> Dict:
         "markets_supported": list(_engine.GRADE_MAP.keys()),
         "db_persistent": bool(os.getenv("DATABASE_URL")),
     }
+
+
+@router.get("", summary="Settlement module health")
+async def settlement_root():
+    """Root health endpoint — confirms settlement module is available."""
+    from datetime import datetime, timezone
+    return {
+        "status": "healthy",
+        "sport": "speedway",
+        "settlement_module": "active",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
