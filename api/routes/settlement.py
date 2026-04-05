@@ -42,7 +42,8 @@ class SpeedwayGradingEngine:
     All grades persisted to PostgreSQL.
     """
 
-    GRADE_MAP = {
+    def __init__(self):
+        self.GRADE_MAP = {
         "first_name": self._grade_winner_market,  # generic
         "head_to_head": self._grade_h2h,
         "race_winner": self._grade_outright,
@@ -54,7 +55,7 @@ class SpeedwayGradingEngine:
         "round_wins": self._grade_winner_market,  # generic
         "round_year": self._grade_winner_market,  # generic
         "top_3": self._grade_top_n,
-    }
+        }
 
     def grade_match(
         self, match_id: str, result: MatchResult, markets: List[Dict]
