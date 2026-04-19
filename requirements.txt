@@ -9,3 +9,5 @@ lightgbm>=4.3.0
 xgboost>=2.0.0
 numpy>=1.26.0
 pandas>=2.2.0
+
+sentry-sdk[fastapi]>=1.40.0
