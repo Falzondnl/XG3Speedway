@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 
 from ml.calibrator import BetaCalibrator
+from ml.elo_seed import normalise_slug, patch_predictor_elo
 from ml.features import FEATURE_COLUMNS, SpeedwayELO
 
 logger = logging.getLogger(__name__)
@@ -62,6 +63,12 @@ class SpeedwayPredictor:
         logger.info("SpeedwayPredictor loaded from %s (%d features, schema=%s)",
                     models_dir, len(feature_cols),
                     self._ensemble.get("schema_version", "unknown"))
+
+        # Patch ELO registry: rename corrupted source slugs (e.g. "-1") to
+        # their canonical forms (e.g. "tai-woffinden") so inference lookups
+        # resolve correctly.  This is idempotent and safe to call every load.
+        patch_predictor_elo(self)
+
         return self
 
     # -----------------------------------------------------------------------
@@ -86,7 +93,10 @@ class SpeedwayPredictor:
         feature_cols = self._ensemble.get("feature_columns", FEATURE_COLUMNS)
         rows = []
         for r in riders:
-            slug = r.get("slug", "")
+            raw_slug = r.get("slug", "")
+            # Normalise slug: maps corrupted source values (e.g. "-1") to their
+            # canonical form (e.g. "tai-woffinden") before ELO / history lookup.
+            slug = normalise_slug(raw_slug)
             hist = self._rider_history.get(slug, {
                 "heat_pts": [], "round_ranks": [], "round_wins": 0,
                 "venues": {}, "season_round_pts": {}, "n_rounds": 0,
@@ -140,7 +150,7 @@ class SpeedwayPredictor:
         results = []
         for i, r in enumerate(riders):
             results.append({
-                "slug": r.get("slug", ""),
+                "slug": normalise_slug(r.get("slug", "")),
                 "first_name": r.get("first_name", ""),
                 "last_name": r.get("last_name", ""),
                 "raw_prob": round(float(raw_probs[i]), 6),
@@ -167,7 +177,8 @@ class SpeedwayPredictor:
         self, riders: list[dict], venue_country: Optional[str]
     ) -> list[dict]:
         """Pure ELO-based fallback when models not loaded."""
-        slugs = [r.get("slug", "") for r in riders]
+        # Normalise slugs before ELO lookup (fixes corrupted source slugs)
+        slugs = [normalise_slug(r.get("slug", "")) for r in riders]
         elo_ratings = np.array([self._elo.get(s) for s in slugs], dtype=float)
         # Convert to win probability via Harville formula
         strengths = np.exp(elo_ratings / 400.0)
@@ -176,7 +187,7 @@ class SpeedwayPredictor:
         results = []
         for i, r in enumerate(riders):
             results.append({
-                "slug": r.get("slug", ""),
+                "slug": slugs[i],  # return canonical slug
                 "first_name": r.get("first_name", ""),
                 "last_name": r.get("last_name", ""),
                 "raw_prob": round(float(win_probs[i]), 6),

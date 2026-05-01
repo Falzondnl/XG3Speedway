@@ -364,6 +364,9 @@ class SpeedwayFeatureExtractor:
         df = df.dropna(subset=["rank", "rider_slug", "round_id"])
         df["is_wildcard"] = df.get("is_wildcard", False).fillna(False).astype(bool)
         df["is_substitute"] = df.get("is_substitute", False).fillna(False).astype(bool)
+        # Apply slug alias normalisation (fixes corrupted API slugs like "-1" → "tai-woffinden")
+        from ml.elo_seed import SLUG_ALIAS_MAP
+        df["rider_slug"] = df["rider_slug"].map(lambda s: SLUG_ALIAS_MAP.get(s, s))
         return df
 
     def _clean_heat_rankings(self, hr: pd.DataFrame) -> pd.DataFrame:
@@ -375,6 +378,9 @@ class SpeedwayFeatureExtractor:
         df["rank"] = pd.to_numeric(df["rank"], errors="coerce")
         df["points"] = pd.to_numeric(df["points"], errors="coerce")
         df = df.dropna(subset=["rider_slug"])
+        # Apply slug alias normalisation (fixes corrupted API slugs like "-1" → "tai-woffinden")
+        from ml.elo_seed import SLUG_ALIAS_MAP
+        df["rider_slug"] = df["rider_slug"].map(lambda s: SLUG_ALIAS_MAP.get(s, s))
         return df
 
     def _clean_round_details(self, rd: pd.DataFrame) -> pd.DataFrame:
